@@ -1,0 +1,15 @@
+@'
+# Python
+.venv*/
+__pycache__/
+*.pyc
+
+# Индексы/кэш/локальные артефакты
+faiss_index/
+build_info.md
+*.cache/
+.cache/
+
+# IDE
+.vscode/
+'@ | Set-Content .\.gitignore -Encoding UTF8

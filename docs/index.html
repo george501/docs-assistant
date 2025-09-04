@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Док-ассистент</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 16px}
+    .chat{border:1px solid #ddd;border-radius:12px;padding:16px;min-height:300px}
+    .msg{margin:12px 0}
+    .q{font-weight:600}
+    .a{white-space:pre-wrap}
+    .src{font-size:12px;color:#555;margin-top:6px}
+    .row{display:flex;gap:8px;margin-top:12px}
+    input[type=text]{flex:1;padding:10px;border:1px solid #ccc;border-radius:8px}
+    button{padding:10px 16px;border:0;background:#0d6efd;color:#fff;border-radius:8px;cursor:pointer}
+    button:disabled{opacity:.6;cursor:not-allowed}
+  </style>
+</head>
+<body>
+  <h1>Док-ассистент</h1>
+  <div class="chat" id="chat"></div>
+  <div class="row">
+    <input id="q" type="text" placeholder="Задайте вопрос по документации..." />
+    <button id="send">Спросить</button>
+  </div>
+
+<script>
+  // Укажи URL твоего бэкенда.
+  // Для локальных тестов: http://127.0.0.1:8000
+  // Для публичного доступа: адрес туннеля/сервера, например https://yourname.trycloudflare.com
+  const API_URL = "http://127.0.0.1:8000/ask";
+
+  const chat = document.getElementById('chat');
+  const q = document.getElementById('q');
+  const btn = document.getElementById('send');
+
+  async function ask() {
+    const question = q.value.trim();
+    if (!question) return;
+    btn.disabled = true;
+
+    const qDiv = document.createElement('div');
+    qDiv.className = 'msg q';
+    qDiv.textContent = 'Вы: ' + question;
+    chat.appendChild(qDiv);
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      const aDiv = document.createElement('div');
+      aDiv.className = 'msg a';
+      aDiv.textContent = 'Ассистент: ' + (data.answer || '(пусто)');
+      chat.appendChild(aDiv);
+
+      if (data.sources && data.sources.length) {
+        const sDiv = document.createElement('div');
+        sDiv.className = 'src';
+        sDiv.innerHTML = 'Источники:<br>' + data.sources.map(s => `<code>${s}</code>`).join('<br>');
+        chat.appendChild(sDiv);
+      }
+    } catch (e) {
+      const err = document.createElement('div');
+      err.className = 'msg a';
+      err.textContent = 'Ошибка запроса: ' + e;
+      chat.appendChild(err);
+    } finally {
+      btn.disabled = false;
+      q.value = '';
+      chat.scrollTop = chat.scrollHeight;
+    }
+  }
+
+  btn.addEventListener('click', ask);
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+</script>
+</body>
+</html>
